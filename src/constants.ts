@@ -52,8 +52,11 @@ export const WINDOW_MIN_HEIGHT = 600;
 // ── 平台判断 ──
 
 export const IS_WIN = process.platform === "win32";
+export const IS_MAC = process.platform === "darwin";
+export const IS_LINUX = process.platform === "linux";
 
 let cachedPackagedWindowsNodeBin: string | null = null;
+let cachedResolvedNodeBin: string | null = null;
 
 // ── 路径解析（自动适配 dev / packaged 两种环境） ──
 
@@ -101,21 +104,32 @@ function resolvePackagedWindowsNodeBin(): string {
 
 /** Node.js 二进制（packaged 复用 Electron binary + ELECTRON_RUN_AS_NODE；dev 优先用下载的） */
 export function resolveNodeBin(): string {
+  if (cachedResolvedNodeBin) return cachedResolvedNodeBin;
+
   if (!app.isPackaged) {
     const exe = IS_WIN ? "node.exe" : "node";
     const bundled = path.join(resolveDevTargetPath(), "runtime", exe);
+    // dev 模式不缓存，因为用户可能重新运行 package:resources
     return fs.existsSync(bundled) ? bundled : "node";
   }
   // macOS：使用 Helper binary（Info.plist 含 LSUIElement=true，不产生 Dock 弹跳图标）
-  if (!IS_WIN) {
+  // Helper 不存在时 fallback 到主 Electron binary，仍可通过 ELECTRON_RUN_AS_NODE=1 工作
+  if (IS_MAC) {
     const contentsDir = path.resolve(path.dirname(process.execPath), "..");
     const exeName = path.basename(process.execPath);
     const helperName = `${exeName} Helper`;
     const helperPath = path.join(
       contentsDir, "Frameworks", `${helperName}.app`, "Contents", "MacOS", helperName,
     );
-    if (fs.existsSync(helperPath)) return helperPath;
+    cachedResolvedNodeBin = fs.existsSync(helperPath) ? helperPath : process.execPath;
+    return cachedResolvedNodeBin;
   }
+  // Linux：直接使用 Electron binary + ELECTRON_RUN_AS_NODE
+  if (IS_LINUX) {
+    cachedResolvedNodeBin = process.execPath;
+    return cachedResolvedNodeBin;
+  }
+  // Windows：优先使用 Helper.exe（resolvePackagedWindowsNodeBin 自带缓存）
   return resolvePackagedWindowsNodeBin();
 }
 

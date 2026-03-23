@@ -52,12 +52,26 @@ function getTargetPaths(platform, arch) {
   };
 }
 
+// ─── 跨平台 npm install 环境变量 ───
+function buildInstallEnv(opts) {
+  return {
+    ...process.env,
+    NODE_ENV: "production",
+    npm_config_os: opts.platform,
+    npm_config_cpu: opts.arch,
+    // 避免 node-llama-cpp 在 cross-build 时执行 postinstall 下载/本地编译
+    NODE_LLAMA_CPP_SKIP_DOWNLOAD: "true",
+    // 避免 sharp 检测到系统全局 libvips 后尝试从源码构建（应使用预编译包）
+    SHARP_IGNORE_GLOBAL_LIBVIPS: "1",
+  };
+}
+
 // ─── 参数解析 ───
 function parseArgs() {
   const args = process.argv.slice(2);
   const opts = {
     platform: process.platform,
-    arch: process.platform === "win32" ? "x64" : "arm64",
+    arch: process.platform === "darwin" ? "arm64" : "x64",
     locale: "en",
   };
 
@@ -70,8 +84,8 @@ function parseArgs() {
   }
 
   // 参数校验
-  if (!["darwin", "win32"].includes(opts.platform)) {
-    die(`不支持的平台: ${opts.platform}，仅支持 darwin | win32`);
+  if (!["darwin", "win32", "linux"].includes(opts.platform)) {
+    die(`不支持的平台: ${opts.platform}，仅支持 darwin | win32 | linux`);
   }
   if (!["arm64", "x64"].includes(opts.arch)) {
     die(`不支持的架构: ${opts.arch}，仅支持 arm64 | x64`);
@@ -288,8 +302,9 @@ async function downloadAndExtractNode(version, platform, arch, runtimeDir) {
   }
 
   // 构造文件名和 URL
-  const ext = platform === "darwin" ? "tar.gz" : "zip";
-  const filename = `node-v${version}-${platform === "win32" ? "win" : "darwin"}-${arch}.${ext}`;
+  const platformMap = { darwin: "darwin", win32: "win", linux: "linux" };
+  const ext = platform === "win32" ? "zip" : "tar.gz";
+  const filename = `node-v${version}-${platformMap[platform]}-${arch}.${ext}`;
   const downloadUrls = [
     `https://nodejs.org/dist/v${version}/${filename}`,
     `https://npmmirror.com/mirrors/node/v${version}/${filename}`,
@@ -329,8 +344,8 @@ function extractNodeRuntimeArchive(cachedFile, runtimeDir, version, platform, ar
   rmDir(runtimeDir);
   ensureDir(runtimeDir);
   const targetId = getTargetId(platform, arch);
-  if (platform === "darwin") {
-    extractDarwin(cachedFile, runtimeDir, version, arch, targetId);
+  if (platform === "darwin" || platform === "linux") {
+    extractPosix(cachedFile, runtimeDir, version, platform, arch, targetId);
   } else {
     assertZipHasCentralDirectory(cachedFile);
     extractWin32(cachedFile, runtimeDir, version, arch, targetId);
@@ -345,10 +360,10 @@ function createExtractTmpDir(cacheDir, targetId) {
   return tmpDir;
 }
 
-// macOS: 从 tar.gz 中提取 node 二进制和 npm
-function extractDarwin(tarPath, runtimeDir, version, arch, targetId) {
-  log("正在解压 macOS Node.js 运行时...");
-  const prefix = `node-v${version}-darwin-${arch}`;
+// POSIX (macOS/Linux): 从 tar.gz 中提取 node 二进制和 npm
+function extractPosix(tarPath, runtimeDir, version, platform, arch, targetId) {
+  log(`正在解压 ${platform} Node.js 运行时...`);
+  const prefix = `node-v${version}-${platform}-${arch}`;
 
   // 创建临时解压目录
   const tmpDir = createExtractTmpDir(path.dirname(tarPath), targetId);
@@ -392,7 +407,7 @@ function extractDarwin(tarPath, runtimeDir, version, arch, targetId) {
 
   // 清理临时目录
   rmDir(tmpDir);
-  log("macOS 运行时提取完成");
+  log(`${platform} 运行时提取完成`);
 }
 
 // Windows: 从 zip 中提取 node.exe 和 npm
@@ -918,14 +933,7 @@ function installDependencies(opts, gatewayDir) {
   execSync(`npm install --omit=dev --install-links --legacy-peer-deps --os=${opts.platform} --cpu=${opts.arch}`, {
     cwd: gatewayDir,
     stdio: "inherit",
-    env: {
-      ...process.env,
-      NODE_ENV: "production",
-      npm_config_os: opts.platform,
-      npm_config_cpu: opts.arch,
-      // 避免 node-llama-cpp 在 cross-build 时执行 postinstall 下载/本地编译
-      NODE_LLAMA_CPP_SKIP_DOWNLOAD: "true",
-    },
+    env: buildInstallEnv(opts),
   });
 
   log("依赖安装完成，开始裁剪 node_modules...");
@@ -1241,13 +1249,7 @@ async function bundleNpmPackagePlugin(plugin, gatewayDir, targetId, opts) {
       {
         cwd: tmpDir,
         stdio: "inherit",
-        env: {
-          ...process.env,
-          NODE_ENV: "production",
-          npm_config_os: opts.platform,
-          npm_config_cpu: opts.arch,
-          NODE_LLAMA_CPP_SKIP_DOWNLOAD: "true",
-        },
+        env: buildInstallEnv(opts),
       }
     );
   } catch (err) {
@@ -1724,13 +1726,13 @@ function generateEntryAndBuildInfo(gatewayDir, platform, arch) {
 function verifyOutput(targetPaths, platform) {
   log("正在验证输出文件...");
 
-  const nodeExe = platform === "darwin" ? "node" : "node.exe";
+  const nodeExe = platform === "win32" ? "node.exe" : "node";
   const targetRel = path.relative(ROOT, targetPaths.targetBase);
 
-  // macOS npm 在 vendor/npm/，Windows npm 在 node_modules/npm/
-  const npmDir = platform === "darwin"
-    ? path.join(targetRel, "runtime", "vendor", "npm")
-    : path.join(targetRel, "runtime", "node_modules", "npm");
+  // macOS/Linux npm 在 vendor/npm/，Windows npm 在 node_modules/npm/
+  const npmDir = platform === "win32"
+    ? path.join(targetRel, "runtime", "node_modules", "npm")
+    : path.join(targetRel, "runtime", "vendor", "npm");
 
   const required = [
     path.join(targetRel, "runtime", nodeExe),

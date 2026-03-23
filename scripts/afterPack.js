@@ -106,35 +106,51 @@ exports.default = async function afterPack(context) {
 // macOS 写入代理 shell 脚本（供 npm wrapper 链式调用 "$dir/node"）；
 // Windows 删除 node.exe 并重写 npm.cmd / npx.cmd 直接调用 <productName>.exe。
 
+// 删除 POSIX 平台的独立 node binary，返回其路径
+function deleteNodeBinary(runtimeDir) {
+  const nodePath = path.join(runtimeDir, "node");
+  if (fs.existsSync(nodePath)) {
+    const sizeMB = (fs.statSync(nodePath).size / 1048576).toFixed(1);
+    fs.unlinkSync(nodePath);
+    console.log(`[afterPack] 已删除 runtime/node (${sizeMB} MB)`);
+  }
+  return nodePath;
+}
+
+// 生成并写入 POSIX 代理脚本（设置 ELECTRON_RUN_AS_NODE=1，exec 到目标 binary）
+// 注意：脚本内容必须纯 ASCII，UTF-8 多字节字符会触发
+// @electron/osx-sign 内 isbinaryfile 的 protobuf 解析崩溃
+function writePosixProxyScript(nodePath, proxyTarget) {
+  const proxyScript = [
+    "#!/bin/sh",
+    "# Proxy script - run Electron binary as Node.js runtime",
+    'export ELECTRON_RUN_AS_NODE=1',
+    `exec "$(dirname "$0")/../../../${proxyTarget}" "$@"`,
+    "",
+  ].join("\n");
+  fs.writeFileSync(nodePath, proxyScript, "utf-8");
+  fs.chmodSync(nodePath, 0o755);
+}
+
 function replaceNodeBinary(platform, targetBase, productName) {
   const runtimeDir = path.join(targetBase, "runtime");
 
   if (platform === "darwin") {
     // macOS: 使用 Helper binary（LSUIElement=true，不产生 Dock 弹跳图标）
     // 路径: runtime/ → resources/ → Resources/ → Contents/Frameworks/<name> Helper.app/...
-    const nodePath = path.join(runtimeDir, "node");
-    if (fs.existsSync(nodePath)) {
-      const sizeMB = (fs.statSync(nodePath).size / 1048576).toFixed(1);
-      fs.unlinkSync(nodePath);
-      console.log(`[afterPack] 已删除 runtime/node (${sizeMB} MB)`);
-    }
-
-    // 代理脚本：设置 ELECTRON_RUN_AS_NODE=1，exec 到 Helper binary
-    // 注意：脚本内容必须纯 ASCII，UTF-8 多字节字符会触发
-    // @electron/osx-sign 内 isbinaryfile 的 protobuf 解析崩溃
+    const nodePath = deleteNodeBinary(runtimeDir);
     const helperName = `${productName} Helper`;
     const helperRelPath = `Frameworks/${helperName}.app/Contents/MacOS/${helperName}`;
-    const proxyScript = [
-      "#!/bin/sh",
-      "# Proxy script - run Electron Helper binary as Node.js runtime",
-      'export ELECTRON_RUN_AS_NODE=1',
-      `exec "$(dirname "$0")/../../../${helperRelPath}" "$@"`,
-      "",
-    ].join("\n");
-
-    fs.writeFileSync(nodePath, proxyScript, "utf-8");
-    fs.chmodSync(nodePath, 0o755);
+    writePosixProxyScript(nodePath, helperRelPath);
     console.log(`[afterPack] 已写入 macOS node 代理脚本 (-> ${helperRelPath})`);
+  } else if (platform === "linux") {
+    // Linux 打包结构: <appOutDir>/resources/resources/runtime/node
+    // Electron binary: <appOutDir>/aivoclaw-ce (package.json name 字段)
+    // 相对路径: runtime/ -> resources/resources/ -> resources/ -> <appOutDir>/
+    const nodePath = deleteNodeBinary(runtimeDir);
+    const electronBinName = productName.toLowerCase().replace(/\s+/g, "-");
+    writePosixProxyScript(nodePath, electronBinName);
+    console.log(`[afterPack] 已写入 Linux node 代理脚本 (-> ${electronBinName})`);
   } else if (platform === "win32") {
     // Windows: runtime/ → resources/ → resources/ → <install>/<productName>.exe
     const nodeExePath = path.join(runtimeDir, "node.exe");
@@ -190,6 +206,8 @@ const KOFFI_PLATFORM_MAP = {
   "darwin-arm64": "darwin_arm64",
   "win32-x64": "win32_x64",
   "win32-arm64": "win32_arm64",
+  "linux-x64": "linux_x64",
+  "linux-arm64": "linux_arm64",
 };
 
 function pruneGatewayModules(gatewayDir, platform, arch) {

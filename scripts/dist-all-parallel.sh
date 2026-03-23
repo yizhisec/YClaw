@@ -8,6 +8,8 @@ declare -a TASKS=(
   "dist:mac:x64"
   "dist:win:x64"
   "dist:win:arm64"
+  "dist:linux:x64"
+  "dist:linux:arm64"
 )
 
 declare -a PIDS=()
@@ -46,4 +48,4 @@ if [[ "${FAILED}" -ne 0 ]]; then
   exit 1
 fi
 
-echo "[parallel] 四个目标打包全部完成"
+echo "[parallel] 所有目标打包全部完成"

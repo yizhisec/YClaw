@@ -28,10 +28,15 @@ const MERGE_TARGETS = [
     ymlName: "latest.yml",
     dirs: ["win32-x64", "win32-arm64"],
   },
+  {
+    name: "Linux",
+    ymlName: "latest-linux.yml",
+    dirs: ["linux-x64", "linux-arm64"],
+  },
 ];
 
 // 需要收集到 release/ 的文件扩展名
-const COLLECT_EXTENSIONS = [".dmg", ".zip", ".exe", ".yml"];
+const COLLECT_EXTENSIONS = [".dmg", ".zip", ".exe", ".yml", ".AppImage"];
 
 // 读取并解析 yml
 function loadYml(filePath) {
