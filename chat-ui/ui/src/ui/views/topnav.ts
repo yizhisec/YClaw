@@ -31,8 +31,8 @@ export function renderTopnav(state: AppViewState) {
   return html`
     <nav class="topnav">
       <div class="topnav-left">
-        <img src="${aivologo}" alt="AivoClaw CE" class="nav-app-icon">
-        <span class="topnav-title">AivoClaw CE</span>
+        <img src="${aivologo}" alt="YClaw" class="nav-app-icon">
+        <span class="topnav-title">YClaw</span>
       </div>
       <div class="topnav-right">
         <button

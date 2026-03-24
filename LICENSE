@@ -1,3 +1,28 @@
+YClaw — Modified version of AivoClaw
+
+Copyright (C) 2025 元岳科技 (YuanYue Technology) — Original AivoClaw
+  https://github.com/yuanyuekejiJN/AivoClaw
+Copyright (C) 2026 YClaw Contributors — Modified version (YClaw)
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU Affero General Public License as published
+by the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+GNU Affero General Public License for more details.
+
+Modifications from the original AivoClaw include:
+- Rebranded user interface to YClaw
+- Added Linux (AppImage) platform support
+- Refactored build scripts for cross-platform packaging
+
+The full text of the GNU Affero General Public License follows:
+
+------------------------------------------------------------------------
+
                     GNU AFFERO GENERAL PUBLIC LICENSE
                        Version 3, 19 November 2007
 

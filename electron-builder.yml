@@ -1,6 +1,6 @@
 appId: com.aivoclaw-ce.app
 productName: AivoClaw CE
-copyright: Copyright © 2025 AivoClaw CE
+copyright: Copyright © 2025 元岳科技 (AivoClaw), 2026 YClaw Contributors
 
 directories:
   output: out
@@ -63,7 +63,7 @@ linux:
     - AppImage
   icon: assets/icon.png
   category: Utility
-  artifactName: "AivoClaw-CE-${version}-${arch}-linux.${ext}"
+  artifactName: "YClaw-${version}-${arch}-linux.${ext}"
 
 appImage:
-  artifactName: "AivoClaw-CE-${version}-${arch}.${ext}"
+  artifactName: "YClaw-${version}-${arch}.${ext}"

@@ -79,9 +79,9 @@ export function renderSettingsAbout(app: SettingsAppState) {
   return html`
     <section class="settings-about-page">
       <div class="settings-about-header">
-        <img src="${aivologo}" alt="AivoClaw CE" class="settings-about-icon">
+        <img src="${aivologo}" alt="YClaw" class="settings-about-icon">
         <div class="settings-about-heading">
-          <h1 class="settings-page-title" style="font-size:20px;">AivoClaw CE</h1>
+          <h1 class="settings-page-title" style="font-size:20px;">YClaw</h1>
           <div class="settings-about-version">Version ${version}</div>
         </div>
       </div>
@@ -118,7 +118,7 @@ export function renderSettingsAbout(app: SettingsAppState) {
           <div class="settings-surface-copy" style="flex:1;">
             <div class="settings-surface-title">版本信息</div>
             <div class="settings-surface-hint">
-              AivoClaw CE ${version}
+              YClaw ${version}
             </div>
           </div>
           <button class="settings-button settings-button-secondary"
@@ -149,8 +149,26 @@ export function renderSettingsAbout(app: SettingsAppState) {
         "520px"
       )}
 
+      <div class="settings-surface-card" style="margin-top:8px;">
+        <div class="settings-surface-head">
+          <div class="settings-surface-copy" style="flex:1;">
+            <div class="settings-surface-title">开源许可</div>
+            <div class="settings-surface-hint">
+              YClaw 基于
+              <a href="https://github.com/yuanyuekejiJN/AivoClaw" target="_blank" rel="noopener"
+                style="color:var(--accent);text-decoration:underline;">AivoClaw</a>
+              修改而来，原版权归
+              <a href="https://aivoclaw.com" target="_blank" rel="noopener"
+                style="color:var(--accent);text-decoration:underline;">元岳科技</a>
+              所有。<br/>
+              本项目遵循 AGPL-3.0 协议开源。
+            </div>
+          </div>
+        </div>
+      </div>
+
       <div class="settings-about-footer">
-        &copy; 2026 AivoClaw CE Team
+        &copy; 2025 元岳科技 (AivoClaw) &middot; &copy; 2026 YClaw Contributors
       </div>
     </section>
   `;

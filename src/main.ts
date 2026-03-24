@@ -50,6 +50,12 @@ import { detectOwnership, migrateFromLegacy, markSetupComplete } from "./aivocla
 import * as log from "./logger";
 import * as analytics from "./analytics";
 
+// 覆盖 Electron 从 productName 继承的 app.name，影响：
+// 1. Linux ~/.config/ 下的 userData 目录名
+// 2. Ubuntu/GNOME 任务栏显示的应用名
+// 必须在 app.ready 之前、任何 app.getPath() 调用之前执行
+app.name = "YClaw";
+
 function formatConsoleLevel(level: number): string {
   const map = ["LOG", "WARNING", "ERROR", "DEBUG", "INFO", "??"];
   return map[level] ?? `LEVEL_${level}`;
@@ -238,7 +244,7 @@ function promptConfigRecovery(opts: {
 // Gateway 启动失败时提示用户进入备份恢复，避免反复重启无效。
 function reportGatewayStartFailure(source: string): RecoveryAction {
   const logPath = resolveGatewayLogPath();
-  const title = "AivoClaw CE Gateway 启动失败";
+  const title = "YClaw Gateway 启动失败";
   const detail =
     `来源: ${source}\n` +
     `建议先前往设置 → 备份与恢复，回退到最近可用配置。\n` +
@@ -262,7 +268,7 @@ function reportConfigInvalidFailure(parseError?: string): RecoveryAction {
 
   log.error(`config file corrupted, JSON parse failed: ${parseError ?? "unknown"}`);
   return promptConfigRecovery({
-    title: "AivoClaw CE 配置文件损坏",
+    title: "YClaw 配置文件损坏",
     message: "检测到 openclaw.json 不是有效 JSON，Gateway 无法启动。",
     detail,
   });
@@ -608,7 +614,7 @@ app.whenReady().then(async () => {
 
   // 下载进度 → 更新托盘 tooltip
   setProgressCallback((pct) => {
-    tray.setTooltip(pct != null ? `AivoClaw CE — 下载更新 ${pct.toFixed(0)}%` : "AivoClaw CE");
+    tray.setTooltip(pct != null ? `YClaw — 下载更新 ${pct.toFixed(0)}%` : "YClaw");
   });
 
   tray.create({

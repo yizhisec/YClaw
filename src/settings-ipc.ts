@@ -537,7 +537,7 @@ export function registerSettingsIpc(opts: SettingsIpcOptions = {}): void {
     if (!app.isPackaged) {
       return `开发模式未检测到 QQ Bot 插件，请先运行 npm run package:resources（当前目标：${process.platform}-${process.arch}）。`;
     }
-    return "QQ Bot 组件缺失，请重新安装 AivoClaw CE。";
+    return "QQ Bot 组件缺失，请重新安装 YClaw。";
   }
 
   function resolveDingtalkMissingMessage(): string {
@@ -545,7 +545,7 @@ export function registerSettingsIpc(opts: SettingsIpcOptions = {}): void {
     if (!app.isPackaged) {
       return `开发模式未检测到钉钉连接器插件，请先运行 npm run package:resources（当前目标：${process.platform}-${process.arch}）。`;
     }
-    return "钉钉连接器组件缺失，请重新安装 AivoClaw CE。";
+    return "钉钉连接器组件缺失，请重新安装 YClaw。";
   }
 
   function resolveWecomMissingMessage(): string {
@@ -553,7 +553,7 @@ export function registerSettingsIpc(opts: SettingsIpcOptions = {}): void {
     if (!app.isPackaged) {
       return `开发模式未检测到企业微信插件，请先运行 npm run package:resources（当前目标：${process.platform}-${process.arch}）。`;
     }
-    return "企业微信插件组件缺失，请重新安装 AivoClaw CE。";
+    return "企业微信插件组件缺失，请重新安装 YClaw。";
   }
 
   ipcMain.handle("settings:get-qqbot-config", async () => {
@@ -1034,7 +1034,7 @@ export function registerSettingsIpc(opts: SettingsIpcOptions = {}): void {
           return { success: false, message: "Kimi Bot Token 不能为空。" };
         }
         if (!isKimiPluginBundled()) {
-          return { success: false, message: "Kimi Channel 组件缺失，请重新安装 AivoClaw CE。" };
+          return { success: false, message: "Kimi Channel 组件缺失，请重新安装 YClaw。" };
         }
 
         const gatewayToken = ensureGatewayAuthTokenInConfig(config);
@@ -1065,7 +1065,7 @@ export function registerSettingsIpc(opts: SettingsIpcOptions = {}): void {
     return runTrackedSettingsAction("save_kimi_search", { enabled }, async () => {
       try {
         if (enabled && !isKimiSearchPluginBundled()) {
-          return { success: false, message: "Kimi Search 组件缺失，请重新安装 AivoClaw CE。" };
+          return { success: false, message: "Kimi Search 组件缺失，请重新安装 YClaw。" };
         }
         // 专属 key 存到 sidecar 文件，不写入 openclaw.json
         if (typeof apiKey === "string") {

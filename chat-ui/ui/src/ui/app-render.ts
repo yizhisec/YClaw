@@ -514,7 +514,7 @@ export function renderApp(state: AppViewState) {
 
   // 当前会话标题
   const currentSession = sessionOptions.find((s) => s.key === currentSessionKey);
-  const chatTitle = currentSession?.label ?? currentSessionKey ?? "AivoClaw CE";
+  const chatTitle = currentSession?.label ?? currentSessionKey ?? "YClaw";
 
   return html`
     ${renderTopnav(state)}
