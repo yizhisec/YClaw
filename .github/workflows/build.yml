@@ -1,0 +1,110 @@
+name: Build
+
+on:
+  workflow_dispatch:
+    inputs:
+      tag_name:
+        description: "Release tag (用于上传制品到 GitHub Release)"
+        required: false
+      upload_release:
+        description: "是否上传制品到 GitHub Release"
+        type: boolean
+        default: false
+
+permissions:
+  contents: write
+
+jobs:
+  build-linux-x64:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run dist:linux:x64
+      - uses: actions/upload-artifact@v4
+        with:
+          name: linux-x64
+          path: out/linux-x64/*.*
+      - if: ${{ inputs.upload_release == 'true' && inputs.tag_name }}
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ inputs.tag_name }}
+          files: out/linux-x64/*.*
+
+  build-linux-arm64:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run dist:linux:arm64
+      - uses: actions/upload-artifact@v4
+        with:
+          name: linux-arm64
+          path: out/linux-arm64/*.*
+      - if: ${{ inputs.upload_release == 'true' && inputs.tag_name }}
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ inputs.tag_name }}
+          files: out/linux-arm64/*.*
+
+  build-windows:
+    runs-on: windows-latest
+    strategy:
+      matrix:
+        arch: [x64, arm64]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run dist:win:${{ matrix.arch }}
+      - uses: actions/upload-artifact@v4
+        with:
+          name: win-${{ matrix.arch }}
+          path: out/win32-${{ matrix.arch }}/*.*
+      - if: ${{ inputs.upload_release == 'true' && inputs.tag_name }}
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ inputs.tag_name }}
+          files: out/win32-${{ matrix.arch }}/*.*
+
+  build-macos:
+    runs-on: macos-latest
+    strategy:
+      matrix:
+        arch: [arm64, x64]
+    env:
+      AIVOCLAW_MAC_SIGN_MODE: ${{ secrets.CSC_NAME && 'sign+notarize' || 'adhoc' }}
+      CSC_NAME: ${{ secrets.CSC_NAME }}
+      CSC_LINK: ${{ secrets.CSC_LINK }}
+      CSC_KEY_PASSWORD: ${{ secrets.CSC_KEY_PASSWORD }}
+      APPLE_API_KEY_ID: ${{ secrets.APPLE_API_KEY_ID }}
+      APPLE_API_ISSUER: ${{ secrets.APPLE_API_ISSUER }}
+      APPLE_API_KEY: ${{ secrets.APPLE_API_KEY }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run dist:mac:${{ matrix.arch }}
+      - uses: actions/upload-artifact@v4
+        with:
+          name: mac-${{ matrix.arch }}
+          path: out/darwin-${{ matrix.arch }}/*.*
+      - if: ${{ inputs.upload_release == 'true' && inputs.tag_name }}
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ inputs.tag_name }}
+          files: out/darwin-${{ matrix.arch }}/*.*
