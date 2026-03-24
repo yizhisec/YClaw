@@ -1,6 +1,6 @@
 {
   "name": "aivoclaw-ce",
-  "version": "2026.3.13",
+  "version": "2026.4.0",
   "private": true,
   "description": "AivoClaw CE desktop app — cross-platform Electron shell for openclaw",
   "main": "dist/main.js",
