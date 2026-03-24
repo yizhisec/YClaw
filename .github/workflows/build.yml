@@ -22,8 +22,7 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-          cache: npm
-      - run: npm ci
+      - run: npm install
       - run: npm run dist:linux:x64
       - uses: actions/upload-artifact@v4
         with:
@@ -42,8 +41,7 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-          cache: npm
-      - run: npm ci
+      - run: npm install
       - run: npm run dist:linux:arm64
       - uses: actions/upload-artifact@v4
         with:
@@ -65,8 +63,7 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-          cache: npm
-      - run: npm ci
+      - run: npm install
       - run: npm run dist:win:${{ matrix.arch }}
       - uses: actions/upload-artifact@v4
         with:
@@ -96,8 +93,7 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-          cache: npm
-      - run: npm ci
+      - run: npm install
       - run: npm run dist:mac:${{ matrix.arch }}
       - uses: actions/upload-artifact@v4
         with:
