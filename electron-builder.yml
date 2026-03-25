@@ -1,4 +1,4 @@
-appId: com.yclaw.app
+appId: com.yizhisec.yclaw.chat
 productName: YClaw
 copyright: Copyright © 2025 元岳科技 (AivoClaw), 2026 YClaw Contributors
 
@@ -19,8 +19,7 @@ afterPack: ./scripts/afterPack.js
 # --- macOS ---
 mac:
   target:
-    - dmg   # 手动分发
-    - zip   # 自动更新（electron-updater 在 macOS 上要求 zip）
+    - dir   # 只生成 .app 目录，不打包
   icon: assets/icon.icns
   category: public.app-category.productivity
   # zip artifactName 含 arch + -mac 后缀，供 electron-updater findFile 按架构匹配
@@ -30,6 +29,8 @@ mac:
   hardenedRuntime: true
   gatekeeperAssess: false
   notarize: true
+  entitlements: build/entitlements.mac.plist
+  entitlementsInherit: build/entitlements.mac.plist
 
 # 自动更新：指向阿里云 CDN
 publish:
